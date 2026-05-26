@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progress | Control Management System</title>
+    <style>
+        body {
+            background-color: #0b0f19; font-family: 'Segoe UI', sans-serif; color: #f9fafb;
+            margin: 0; padding: 2rem; display: flex; justify-content: center;
+        }
+        .dashboard-container {
+            width: 100%; max-width: 700px; background: #111827; border: 1px solid #1f2937;
+            padding: 2.5rem; border-radius: 12px;
+        }
+        .header-ui { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1f2937; padding-bottom: 1rem; }
+        h1 { color: #10b981; margin: 0; }
+        .logout-btn { background: #ef4444; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; }
+        .profile-section { display: flex; gap: 2rem; margin-top: 2rem; flex-wrap: wrap; }
+        .avatar-frame { width: 180px; height: 240px; background: #1f2937; border: 2px solid #374151; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
+        .bio-text { flex: 1; min-width: 280px; }
+        .card { background: #1f2937; padding: 1.25rem; border-radius: 8px; margin-top: 1.5rem; border-left: 4px solid #10b981; }
+        h3 { margin-top: 0; color: #10b981; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header-ui">
+            <h1>Progress Dashboard</h1>
+            <button class="logout-btn" onclick="logout()">Lock Vault</button>
+        </div>
+
+        <div class="profile-section">
+            <div class="avatar-frame">
+                <!-- Profile Image Component loaded from file 1000359318.jpg -->
+                <img src="1000359318.jpg" alt="Progress Profile Photo">
+            </div>
+            <div class="bio-text">
+                <h2>Biography</h2>
+                <p>NAME: ADETOKUNBO PROGRESS TOBILOBA<br> AGE: 2008 <br> .</p>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Educational Background & Academic History</h3>
+            <p>SCHOOL:OBAFEMI AWOLOWO UNIVERSITY,<br>GRADUTION: 2025/2026 -2030/2031<br>COURSE: COMPUTER ENGINEERING.</p>
+        </div>
+
+        <div class="card">
+            <h3>Core Technical Competencies</h3>
+            <p>• Advanced Web Engineering & Architecture Design<br>• Autonomous Chatbot Engine Automation Integration</p>
+        </div>
+    </div>
+
+    <script>
+        async function logout() {
+            await fetch('/api/logout', { method: 'POST' });
+            window.location.href = '/';
+        }
+    </script>
+</body>
+</html>

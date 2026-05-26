@@ -1,68 +1,78 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
+const session = require('express-session');
+const path = require('path');
 const app = express();
 
-app.use(express.static('public'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Temporary in-memory array to simulate a database array
-const usersDatabase = [];
+// Configure secure browser session state memory
+app.use(session({
+    secret: 'progress_hidden_vault_key_9981',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { maxAge: 60 * 60 * 1000 } // Session expires after 1 hour
+}));
 
-// 1. REGISTRATION ROUTE
-app.post('/api/register', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        
-        // Check if user already exists
-        const userExists = usersDatabase.find(u => u.username === username);
-        if (userExists) {
-            return res.status(400).send("Username already taken!");
-        }
+// Hardcoded Master Credentials (Securely Hashed)
+const MASTER_USER = "Progress";
+const MASTER_HASH = "$2a$10$7Z2vA72Wd6mGvqgXgqO8Eu11v78bK1wY2mN4M3XbO9P8Q7R6S5T1u";
 
-        // Hash the password securely
-        const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Save user details to our "database"
-        usersDatabase.push({
-            username: username,
-            password: hashedPassword
-        });
-
-        console.log(`\n[REGISTRATION] New User Added: ${username}`);
-        console.log(`[DATABASE STORED] Password encrypted to: ${hashedPassword}`);
-        
-        res.send("Account created securely!");
-    } catch (error) {
-        res.status(500).send("Error creating account.");
+// Authentication Gatekeeper Middleware
+const requireAuth = (req, res, next) => {
+    if (req.session && req.session.authenticated) {
+        return next();
     }
-});
+    // If not authenticated, instantly block access or redirect
+    res.status(401).sendFile(path.join(__dirname, 'public', 'login.html'));
+};
 
-// 2. LOGIN ROUTE
+// 1. LOGIN CONTROLLER ENDPOINT
 app.post('/api/login', async (req, res) => {
-    try {
-        const { username, password } = req.body;
-        
-        // Look up the user
-        const user = usersDatabase.find(u => u.username === username);
-        if (!user) {
-            return res.status(400).send("User not found!");
-        }
+    const { username, password } = req.body;
 
-        // Securely compare the typed password with the scrambled hash
-        const isMatch = await bcrypt.compare(password, user.password);
-        
-        if (isMatch) {
-            console.log(`\n[LOGIN] Success! User "${username}" authenticated.`);
-            res.send("Welcome back! Login successful.");
+    if (username !== MASTER_USER) {
+        return res.status(401).send("Unauthorized Access Protocol.");
+    }
+
+    try {
+        const match = await bcrypt.compare(password, MASTER_HASH);
+        if (match) {
+            req.session.authenticated = true;
+            req.session.user = username;
+            return res.send("Success");
         } else {
-            console.log(`\n[LOGIN] Failed! Incorrect password attempted for user "${username}".`);
-            res.status(400).send("Invalid credentials!");
+            return res.status(401).send("Invalid credentials.");
         }
     } catch (error) {
-        res.status(500).send("Server error during verification.");
+        return res.status(500).send("Authentication server error.");
     }
 });
 
-app.listen(3000, () => {
-    console.log('Secure Server running smoothly on port 3000');
+// 2. LOGOUT ENDPOINT
+app.post('/api/logout', (req, res) => {
+    req.session.destroy();
+    res.send("Logged out");
+});
+
+// Serve the login screen publicly
+app.get('/', (req, res) => {
+    if (req.session && req.session.authenticated) {
+        return res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+    }
+    res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Protect the entire private dashboard asset layer
+app.get('/dashboard.html', requireAuth, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'dashboard.html'));
+});
+
+// Publicly expose static assets safely except the actual dashboard layout
+app.use(express.static('public', { index: false }));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Secure Private Vault online on port ${PORT}`);
 });
