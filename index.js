@@ -1,5 +1,4 @@
 const express = require('express');
-const bcrypt = require('bcryptjs');
 const session = require('express-session');
 const path = require('path');
 const app = express();
@@ -15,38 +14,29 @@ app.use(session({
     cookie: { maxAge: 60 * 60 * 1000 } // Session expires after 1 hour
 }));
 
-// Hardcoded Master Credentials (Securely Hashed)
+// Hardcoded Master Credentials
 const MASTER_USER = "Progress";
-const MASTER_HASH = "$2a$10$7Z2vA72Wd6mGvqgXgqO8Eu11v78bK1wY2mN4M3XbO9P8Q7R6S5T1u";
+const MASTER_PASS = "Tobi@1974";
 
 // Authentication Gatekeeper Middleware
 const requireAuth = (req, res, next) => {
     if (req.session && req.session.authenticated) {
         return next();
     }
-    // If not authenticated, instantly block access or redirect
     res.status(401).sendFile(path.join(__dirname, 'public', 'login.html'));
 };
 
 // 1. LOGIN CONTROLLER ENDPOINT
-app.post('/api/login', async (req, res) => {
+app.post('/api/login', (req, res) => {
     const { username, password } = req.body;
 
-    if (username !== MASTER_USER) {
-        return res.status(401).send("Unauthorized Access Protocol.");
-    }
-
-    try {
-        const match = await bcrypt.compare(password, MASTER_HASH);
-        if (match) {
-            req.session.authenticated = true;
-            req.session.user = username;
-            return res.send("Success");
-        } else {
-            return res.status(401).send("Invalid credentials.");
-        }
-    } catch (error) {
-        return res.status(500).send("Authentication server error.");
+    // Direct, exact comparison for absolute certainty
+    if (username === MASTER_USER && password === MASTER_PASS) {
+        req.session.authenticated = true;
+        req.session.user = username;
+        return res.send("Success");
+    } else {
+        return res.status(401).send("Invalid credentials.");
     }
 });
 
